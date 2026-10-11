@@ -1,0 +1,140 @@
+<title>Schoolwork Calendar</title>
+<style>
+/* layout: month grid left, due-soon list right; stacks on phones */
+:root{--bg:#f6f7f9;--panel:#fff;--fg:#1c2230;--mute:#667085;--line:#e3e6ec;--accent:#2f5bea;--today:#e8eefe;--bad:#c4321f;--ok:#1f8a4c;--sat:62%;--lit:42%;
+--display:"Fraunces",Georgia,serif;--body:"IBM Plex Sans",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12151c;--panel:#1b2029;--fg:#e8ebf2;--mute:#9aa3b5;--line:#2c3340;--accent:#7b9bff;--today:#222c4a;--bad:#ff8a78;--ok:#58c88a;--lit:68%;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#12151c;--panel:#1b2029;--fg:#e8ebf2;--mute:#9aa3b5;--line:#2c3340;--accent:#7b9bff;--today:#222c4a;--bad:#ff8a78;--ok:#58c88a;--lit:68%;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:15px/1.45 var(--body);padding-inline:16px;padding-block:20px}
+*{box-sizing:border-box}
+main{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px}
+@media(max-width:820px){main{grid-template-columns:minmax(0,1fr)}}
+h1{font:600 28px var(--display);margin:0;text-wrap:balance}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.nav{display:flex;gap:6px;align-items:center}
+button,input,select{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-width:0}
+.mo{font:600 18px var(--display);min-width:9ch;text-align:center}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.dow{background:var(--panel);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:6px;text-align:center}
+.day{background:var(--panel);min-height:92px;padding:4px;display:flex;flex-direction:column;gap:2px;min-width:0;cursor:pointer}
+.day.out{opacity:.45}.day.today{background:var(--today)}
+.day b{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.chip{font-size:11px;line-height:1.25;padding:1px 4px;border-radius:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);cursor:pointer}
+.chip.done{text-decoration:line-through;opacity:.5}
+@media(max-width:560px){.day{min-height:60px}.chip{font-size:0;height:6px;padding:0;border:0;background:var(--c);border-radius:3px}}
+h2{font:600 16px var(--display);margin:0 0 8px}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+li{display:flex;gap:8px;align-items:flex-start;border-left:3px solid var(--c);padding-left:8px}
+li .t{flex:1;min-width:0;overflow-wrap:anywhere}li small{display:block;color:var(--mute)}
+li.done .t{text-decoration:line-through;opacity:.5}
+.late{color:var(--bad)}.stat{display:flex;gap:16px;margin-bottom:10px;font-variant-numeric:tabular-nums}.stat span{color:var(--mute);font-size:12px;display:block}
+.stat strong{font:600 22px var(--display)}
+form{display:grid;gap:8px;margin-top:12px}
+.empty{color:var(--mute)}
+aside{display:flex;flex-direction:column;gap:20px;min-width:0}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@600&family=IBM+Plex+Sans:wght@400;600&display=swap">
+
+<main>
+<header>
+  <h1>Schoolwork Calendar</h1>
+  <div class="nav">
+    <button id="prev" aria-label="Previous month">‹</button>
+    <span class="mo" id="mo"></span>
+    <button id="next" aria-label="Next month">›</button>
+    <button id="now">Today</button>
+  </div>
+</header>
+
+<section class="panel"><div class="grid" id="grid"></div></section>
+
+<aside>
+  <section class="panel">
+    <div class="stat" id="stat"></div>
+    <h2>Due soon</h2>
+    <ul id="soon"></ul>
+  </section>
+  <section class="panel">
+    <h2 id="fh">Add work</h2>
+    <form id="f">
+      <input id="title" placeholder="Essay draft, Ch. 4 problems…" required>
+      <input id="course" placeholder="Course (e.g. Bio 201)" list="courses" required>
+      <datalist id="courses"></datalist>
+      <input id="date" type="date" required>
+      <select id="type"><option>Assignment</option><option>Exam</option><option>Project</option><option>Reading</option><option>Quiz</option></select>
+      <button class="primary">Add</button>
+    </form>
+  </section>
+</aside>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayIso=iso(new Date());
+let items=[], view=new Date(); view.setDate(1);
+
+// Storage: shared db when available, else localStorage (ponytail: no sync in fallback)
+let db=null;
+const LS="schoolwork-items";
+const load=()=>{try{return JSON.parse(localStorage.getItem(LS))||[]}catch{return[]}};
+const save=()=>{try{localStorage.setItem(LS,JSON.stringify(items))}catch{}};
+async function put(it){ if(db) await db.collection("items").doc(it.id).set(it); else { items=items.filter(x=>x.id!==it.id).concat(it); save(); render(); } }
+async function del(id){ if(db) await db.collection("items").doc(id).delete(); else { items=items.filter(x=>x.id!==id); save(); render(); } }
+
+// Course colour: stable hue from name; lightness comes from theme token
+const colour=c=>{let h=0;for(const ch of c)h=(h*31+ch.charCodeAt(0))%360;return`hsl(${h} var(--sat) var(--lit))`};
+
+function chip(it){const e=document.createElement("div");e.className="chip"+(it.done?" done":"");e.style.setProperty("--c",colour(it.course));
+  e.textContent=(it.type==="Exam"?"★ ":"")+it.title;e.title=`${it.course} · ${it.type}`;
+  e.onclick=ev=>{ev.stopPropagation();put({...it,done:!it.done})};return e}
+
+function render(){
+  $("mo").textContent=view.toLocaleDateString(undefined,{month:"long",year:"numeric"});
+  const g=$("grid");g.innerHTML="";
+  for(const d of["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]){const e=document.createElement("div");e.className="dow";e.textContent=d;g.append(e)}
+  const start=new Date(view);start.setDate(1-view.getDay());
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);const k=iso(d);
+    if(i===35&&d.getMonth()!==view.getMonth())break;
+    const c=document.createElement("div");c.className="day"+(d.getMonth()!==view.getMonth()?" out":"")+(k===todayIso?" today":"");
+    c.innerHTML=`<b>${d.getDate()}</b>`;
+    items.filter(x=>x.date===k).forEach(x=>c.append(chip(x)));
+    c.onclick=()=>{$("date").value=k;$("title").focus()};
+    g.append(c);
+  }
+  const open=items.filter(x=>!x.done).sort((a,b)=>a.date.localeCompare(b.date));
+  const wk=iso(new Date(Date.now()+7*864e5));
+  $("stat").innerHTML=`<div><strong class="${open.some(x=>x.date<todayIso)?"late":""}">${open.filter(x=>x.date<todayIso).length}</strong><span>overdue</span></div>
+   <div><strong>${open.filter(x=>x.date>=todayIso&&x.date<=wk).length}</strong><span>next 7 days</span></div>
+   <div><strong>${items.filter(x=>x.done).length}/${items.length}</strong><span>done</span></div>`;
+  const s=$("soon");s.innerHTML="";
+  if(!open.length) s.innerHTML=`<li class="empty" style="border:0">${items.length?"Everything is done.":"Nothing yet. Add your first assignment below, or click a day."}</li>`;
+  for(const x of open.slice(0,8)){
+    const li=document.createElement("li");li.style.setProperty("--c",colour(x.course));
+    const days=Math.round((new Date(x.date+"T00:00")-new Date(todayIso+"T00:00"))/864e5);
+    li.innerHTML=`<input type="checkbox" aria-label="Mark done"><div class="t">${esc(x.title)}<small>${esc(x.course)} · ${x.type} · <span class="${days<0?"late":""}">${days<0?-days+"d overdue":days===0?"today":days===1?"tomorrow":"in "+days+"d"}</span></small></div><button aria-label="Delete" style="padding:0 6px">×</button>`;
+    li.firstChild.onchange=()=>put({...x,done:true});li.lastChild.onclick=()=>del(x.id);s.append(li);
+  }
+  $("courses").innerHTML=[...new Set(items.map(x=>x.course))].map(c=>`<option value="${esc(c)}">`).join("");
+}
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+$("prev").onclick=()=>{view.setMonth(view.getMonth()-1);render()};
+$("next").onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+$("now").onclick=()=>{view=new Date();view.setDate(1);render()};
+$("date").value=todayIso;
+$("f").onsubmit=e=>{e.preventDefault();
+  put({id:"i"+Date.now().toString(36),title:$("title").value.trim(),course:$("course").value.trim(),date:$("date").value,type:$("type").value,done:false});
+  $("title").value="";};
+
+items=load();render();
+(async()=>{
+  const d=await window.claude?.use("db"); if(!d) return;
+  db=d; d.collection("items").onSnapshot(s=>{items=s.docs.map(x=>x.data());render()},()=>{db=null;items=load();render()});
+})();
+</script>
