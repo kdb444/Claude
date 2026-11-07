@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transfer Timeline</title>
+<style>
+  * { box-sizing: border-box; margin: 0 }
+  body { font: 16px/1.5 system-ui, sans-serif; background: #111; color: #fff; overflow-x: hidden }
+  h1 { padding: 2rem 2rem 1rem; font-size: 1.6rem }
+
+  .timeline { display: flex; height: calc(100vh - 5rem); gap: 4px; padding: 0 4px 4px }
+
+  .step {
+    flex: 1; position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 1.5rem; outline: 0; cursor: pointer;
+    /* swap the picsum URLs for your own images */
+    background: linear-gradient(to top, #000c, #0003), var(--img) center/cover #333;
+    transition: flex .3s;
+  }
+  .step b { font-size: 3rem; opacity: .5; line-height: 1 }
+  .step h2 { font-size: 1.3rem; margin: .3rem 0 }
+  .step p { font-size: .95rem; opacity: .85 }
+
+  /* the slide-in panel: fixed to the viewport, parked off-screen left */
+  .detail {
+    position: fixed; inset: 0 6rem 0 0;          /* 6rem strip on the right = room to move off */
+    background: #14213d; padding: 4rem 5vw; overflow: auto;
+    transform: translateX(-105%); pointer-events: none;
+    transition: transform .45s cubic-bezier(.2, .8, .2, 1);
+    z-index: 10;
+  }
+  .step:hover .detail, .step:focus-within .detail { transform: none; pointer-events: auto }
+  .detail h3 { font-size: 2.2rem; margin-bottom: 1rem }
+  .detail p, .detail li { max-width: 60ch; margin-bottom: .8rem; font-size: 1.1rem }
+  .detail ul { padding-left: 1.2rem }
+
+  @media (max-width: 700px) {   /* ponytail: phones have no hover; tap = focus, stacked layout */
+    .timeline { flex-direction: column; height: auto }
+    .step { min-height: 30vh }
+    .detail { inset: 0 }
+  }
+</style>
+
+<h1>How to Transfer: 5 Steps</h1>
+
+<main class="timeline">
+  <section class="step" tabindex="0" style="--img:url(https://picsum.photos/seed/research/600/900)">
+    <b>1</b><h2>Research</h2><p>Find schools and programs that fit your goals.</p>
+    <div class="detail">
+      <h3>1 · Research</h3>
+      <p>Start a year before you plan to move. Compare programs, costs, and transfer-friendliness.</p>
+      <ul><li>Shortlist 3–5 schools</li><li>Check each school's transfer admission page</li><li>Note deadlines and GPA requirements</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:url(https://picsum.photos/seed/advisor/600/900)">
+    <b>2</b><h2>Meet an Advisor</h2><p>Get a plan from someone who knows the system.</p>
+    <div class="detail">
+      <h3>2 · Meet an Advisor</h3>
+      <p>Your current school's advisor and the destination school's transfer advisor can map out your path.</p>
+      <ul><li>Ask about transfer agreements</li><li>Confirm which courses count</li><li>Build a semester-by-semester plan</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:url(https://picsum.photos/seed/study/600/900)">
+    <b>3</b><h2>Prerequisites</h2><p>Finish the required courses and keep your GPA up.</p>
+    <div class="detail">
+      <h3>3 · Prerequisites</h3>
+      <p>Complete the courses your target major requires before you apply.</p>
+      <ul><li>Major-specific prerequisites</li><li>General education requirements</li><li>Minimum GPA for admission</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:url(https://picsum.photos/seed/apply/600/900)">
+    <b>4</b><h2>Apply</h2><p>Submit applications, transcripts, and financial aid forms.</p>
+    <div class="detail">
+      <h3>4 · Apply</h3>
+      <p>Gather documents early; deadlines are firm.</p>
+      <ul><li>Application and fee (or waiver)</li><li>Official transcripts from every school attended</li><li>Essays and recommendations if required</li><li>FAFSA / financial aid</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:url(https://picsum.photos/seed/campus/600/900)">
+    <b>5</b><h2>Enroll</h2><p>Get credits evaluated, register, and settle in.</p>
+    <div class="detail">
+      <h3>5 · Enroll</h3>
+      <p>Accept your offer and confirm how your credits transfer.</p>
+      <ul><li>Pay deposit and accept admission</li><li>Review your credit evaluation</li><li>Attend orientation and register for classes</li></ul>
+    </div>
+  </section>
+</main>
