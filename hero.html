@@ -30,14 +30,14 @@
 
 <div class="hero" id="h"></div>
 
-<details open>
+<details>
   <summary>Controls</summary>
   <div class="body" id="ui"></div>
 </details>
 
 <script>
-  const S = { cols: 16, rows: 16, gap: 1.4, spread: 1.2, cycle: 9, flip: 1.2, persp: 0,
-              style: 'Flip horizontal', dir: 'Diagonal ↘', ease: 'ease-in-out' };
+  const S = { cols: 10, rows: 23, gap: 1.4, spread: 1.6, cycle: 8, flip: 1.6, persp: 0,
+              style: 'Cross-fade', dir: 'Diagonal ↘', ease: 'ease' };
 
   const rot = f => ({ axis: f });
   const swap = (f, b) => ({ front: f, back: b });
