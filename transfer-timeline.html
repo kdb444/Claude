@@ -1,0 +1,101 @@
+<title>Transfer Timeline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* layout: five tall panels in a row; hovering one slides a full-page detail block in from the left */
+  :root {
+    --bg: #101820; --fg: #f4f1ea; --panel: #17283b; --muted: #f4f1eacc;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; margin: 0 }
+  body {
+    background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; overflow-x: hidden;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 1.5rem;
+  }
+  h1 { font-size: 1.6rem; margin-bottom: 1rem; text-wrap: balance }
+
+  .timeline { display: flex; gap: 6px; height: 70vh; min-height: 420px; position: relative; overflow: hidden }
+  .hint { margin-top: 1.5rem; color: var(--muted); font-size: .9rem }
+
+  .step {
+    flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 1.5rem 1.2rem; outline: 0; cursor: pointer;
+    /* ponytail: gradients stand in for photos; external images are blocked here, embed data: URIs to use real ones */
+    background: linear-gradient(to top, #000a, #0002), var(--img);
+    transition: flex .3s;
+  }
+  .step:focus-visible { box-shadow: inset 0 0 0 3px var(--fg) }
+  .step b { font-size: 3rem; opacity: .5; line-height: 1; font-variant-numeric: tabular-nums }
+  .step h2 { font-size: 1.3rem; margin: .3rem 0 }
+  .step p { font-size: .95rem; color: var(--muted) }
+
+  .detail {
+    /* covers the timeline only, so moving the cursor up or down off it lands on empty page, not on another step */
+    position: absolute; inset: 0; z-index: 10;
+    background: var(--panel); padding: 3rem 4vw; overflow: auto; cursor: default;
+    transform: translateX(-105%); pointer-events: none;
+    transition: transform .45s cubic-bezier(.2, .8, .2, 1);
+  }
+  .step:hover .detail, .step:focus-within .detail { transform: none; pointer-events: auto }
+  .detail h3 { font-size: 2.2rem; margin-bottom: 1rem; text-wrap: balance }
+  .detail p, .detail li { max-width: 60ch; margin-bottom: .8rem; font-size: 1.1rem }
+  .detail ul { padding-left: 1.2rem }
+
+  @media (max-width: 700px) {   /* phones have no hover: tap focuses, panels stack */
+    .timeline { flex-direction: column; height: auto }
+    .step { min-height: 30vh }
+    .detail { inset: 0 }
+  }
+  @media (prefers-reduced-motion: reduce) { .detail { transition: none } }
+</style>
+
+<h1>How to Transfer: 5 Steps</h1>
+
+<main class="timeline">
+  <section class="step" tabindex="0" style="--img:linear-gradient(160deg,#2a6f97,#014f86)">
+    <b>1</b><h2>Research</h2><p>Find schools and programs that fit your goals.</p>
+    <div class="detail">
+      <h3>1 · Research</h3>
+      <p>Start a year before you plan to move. Compare programs, costs, and transfer-friendliness.</p>
+      <ul><li>Shortlist 3–5 schools</li><li>Check each school's transfer admission page</li><li>Note deadlines and GPA requirements</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:linear-gradient(160deg,#52796f,#2f4f4f)">
+    <b>2</b><h2>Meet an Advisor</h2><p>Get a plan from someone who knows the system.</p>
+    <div class="detail">
+      <h3>2 · Meet an Advisor</h3>
+      <p>Your current school's advisor and the destination school's transfer advisor can map out your path.</p>
+      <ul><li>Ask about transfer agreements</li><li>Confirm which courses count</li><li>Build a semester-by-semester plan</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:linear-gradient(160deg,#9c6644,#582f0e)">
+    <b>3</b><h2>Prerequisites</h2><p>Finish the required courses and keep your GPA up.</p>
+    <div class="detail">
+      <h3>3 · Prerequisites</h3>
+      <p>Complete the courses your target major requires before you apply.</p>
+      <ul><li>Major-specific prerequisites</li><li>General education requirements</li><li>Minimum GPA for admission</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:linear-gradient(160deg,#7b2d8e,#3c1053)">
+    <b>4</b><h2>Apply</h2><p>Submit applications, transcripts, and financial aid forms.</p>
+    <div class="detail">
+      <h3>4 · Apply</h3>
+      <p>Gather documents early; deadlines are firm.</p>
+      <ul><li>Application and fee (or waiver)</li><li>Official transcripts from every school attended</li><li>Essays and recommendations if required</li><li>FAFSA / financial aid</li></ul>
+    </div>
+  </section>
+
+  <section class="step" tabindex="0" style="--img:linear-gradient(160deg,#c1121f,#780000)">
+    <b>5</b><h2>Enroll</h2><p>Get credits evaluated, register, and settle in.</p>
+    <div class="detail">
+      <h3>5 · Enroll</h3>
+      <p>Accept your offer and confirm how your credits transfer.</p>
+      <ul><li>Pay deposit and accept admission</li><li>Review your credit evaluation</li><li>Attend orientation and register for classes</li></ul>
+    </div>
+  </section>
+</main>
+<p class="hint">Move your cursor above or below the panel to close it, then hover the next step.</p>
