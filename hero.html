@@ -9,7 +9,7 @@
           display: grid; grid-template: repeat(var(--rows), 1fr) / repeat(var(--cols), 1fr); }
   .t { position: relative; transform-style: preserve-3d; animation: flip var(--cycle) infinite ease-in-out;
        animation-delay: calc((var(--c) + var(--r)) * var(--step)); }
-  .t::before, .t::after { content: ""; position: absolute; inset: 0; backface-visibility: hidden; box-shadow: inset 0 0 0 0.5px #2a0f1c;
+  .t::before, .t::after { content: ""; position: absolute; inset: 0; backface-visibility: hidden; box-shadow: inset 0 0 0 0.7px #2a0f1c;
        background-size: calc(var(--cols) * 100%) calc(var(--rows) * 100%);
        background-position: calc(var(--c) * 100% / (var(--cols) - 1)) calc(var(--r) * 100% / (var(--rows) - 1)); }
   .t::before { background-image: url(green.jpg); }
