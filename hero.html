@@ -1,30 +1,133 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>Hero</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tile Flip Hero</title>
 <style>
-  /* ponytail: change COLS/ROWS/--dur/--hold to taste */
-  :root { --cols: 16; --rows: 16; --dur: 1.2s; --step: 0.04s; --cycle: 9s; }
-  html, body { margin: 0; height: 100%; background: #000; }
-  .hero { background: #2a0f1c; position: relative; width: 100vw; aspect-ratio: 16/9; max-height: 100vh; overflow: hidden;
-          display: grid; grid-template: repeat(var(--rows), 1fr) / repeat(var(--cols), 1fr); }
-  .t { position: relative; transform-style: preserve-3d; animation: flip var(--cycle) infinite ease-in-out;
-       animation-delay: calc((var(--c) + var(--r)) * var(--step)); }
-  .t::before, .t::after { content: ""; position: absolute; inset: 0; backface-visibility: hidden; box-shadow: inset 0 0 0 0.7px #2a0f1c;
+  :root { --bg: #15090f; --panel: rgba(21,9,15,.88); --fg: #f6e9f0; --mute: #b995a7; --accent: #ff3b7f; --gc: #2a0f1c; --gap: 1.4; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); color-scheme: dark; }
+  body { min-height: 100vh; display: grid; place-items: center; font: 13px/1.3 system-ui, sans-serif; }
+  .hero { width: min(100vw, calc(100vh * 16 / 9)); aspect-ratio: 16/9; overflow: hidden; display: grid; background: var(--gc); }
+  .t { position: relative; transform-style: preserve-3d; }
+  .hero[data-mode=flat] .t { transform-style: flat; overflow: hidden; }
+  .f { position: absolute; inset: 0; backface-visibility: hidden; box-shadow: inset 0 0 0 calc(var(--gap) * .5px) var(--gc);
        background-size: calc(var(--cols) * 100%) calc(var(--rows) * 100%);
        background-position: calc(var(--c) * 100% / (var(--cols) - 1)) calc(var(--r) * 100% / (var(--rows) - 1)); }
-  .t::before { background-image: url(green.jpg); }
-  .t::after  { background-image: url(pink.jpg); transform: rotateY(180deg); }
-  /* green -> hold pink -> back to green -> hold green; diagonal delay makes the wave */
-  @keyframes flip {
-    0%, 8%   { transform: rotateY(0); }
-    16%, 58% { transform: rotateY(180deg); }
-    66%, 100% { transform: rotateY(360deg); }
-  }
+  .f.g { background-image: url(green.jpg); }
+  .f.p { background-image: url(pink.jpg); }
+
+  details { position: fixed; right: 12px; bottom: 12px; width: min(320px, calc(100vw - 24px)); background: var(--panel);
+            border: 1px solid #ffffff22; border-radius: 10px; backdrop-filter: blur(10px); }
+  summary { cursor: pointer; padding: 10px 12px; font-weight: 600; }
+  .body { padding: 0 12px 12px; display: grid; gap: 8px; max-height: 70vh; overflow: auto; }
+  label { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; color: var(--mute); }
+  label output { color: var(--fg); font-variant-numeric: tabular-nums; }
+  label input[type=range], label select { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+  select, button { background: #ffffff14; color: var(--fg); border: 1px solid #ffffff2a; border-radius: 6px; padding: 5px 6px; font: inherit; }
+  .row { display: flex; gap: 8px; } .row > * { flex: 1; }
+  button { cursor: pointer; } button:hover { background: #ffffff24; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 </style>
+
 <div class="hero" id="h"></div>
+
+<details open>
+  <summary>Controls</summary>
+  <div class="body" id="ui"></div>
+</details>
+
 <script>
-  const h = document.getElementById('h'), cs = getComputedStyle(document.documentElement);
-  const C = +cs.getPropertyValue('--cols'), R = +cs.getPropertyValue('--rows');
-  for (let r = 0; r < R; r++) for (let c = 0; c < C; c++)
-    h.insertAdjacentHTML('beforeend', `<div class="t" style="--c:${c};--r:${r}"></div>`);
+  const S = { cols: 16, rows: 16, gap: 1.4, spread: 1.2, cycle: 9, flip: 1.2, persp: 0,
+              style: 'Flip horizontal', dir: 'Diagonal ↘', ease: 'ease-in-out' };
+
+  const rot = f => ({ axis: f });
+  const swap = (f, b) => ({ front: f, back: b });
+  const STYLES = {
+    'Flip horizontal': rot(d => `rotateY(${d}deg)`),
+    'Flip vertical':   rot(d => `rotateX(${d}deg)`),
+    'Flip diagonal':   rot(d => `rotate3d(1,1,0,${d}deg)`),
+    'Scale swap':  swap([{ transform: 'scale(1)' }, { transform: 'scale(0)' }], [{ transform: 'scale(0)' }, { transform: 'scale(1)' }]),
+    'Spin zoom':   swap([{ transform: 'rotate(0) scale(1)' }, { transform: 'rotate(180deg) scale(0)' }],
+                        [{ transform: 'rotate(-180deg) scale(0)' }, { transform: 'rotate(0) scale(1)' }]),
+    'Cross-fade':  swap([{ opacity: 1 }, { opacity: 0 }], [{ opacity: 0 }, { opacity: 1 }]),
+    'Wipe →':      swap([{ transform: 'translateX(0)' }, { transform: 'translateX(-101%)' }], [{ transform: 'translateX(101%)' }, { transform: 'translateX(0)' }]),
+    'Wipe ↓':      swap([{ transform: 'translateY(0)' }, { transform: 'translateY(-101%)' }], [{ transform: 'translateY(101%)' }, { transform: 'translateY(0)' }]),
+  };
+  // wave order: returns 0..1 per tile
+  const DIRS = {
+    'Diagonal ↘': (c, r, C, R) => (c / (C - 1) + r / (R - 1)) / 2,
+    'Diagonal ↖': (c, r, C, R) => 1 - (c / (C - 1) + r / (R - 1)) / 2,
+    'Left → right': (c, r, C) => c / (C - 1),
+    'Top → bottom': (c, r, C, R) => r / (R - 1),
+    'From center': (c, r, C, R) => Math.hypot(c / (C - 1) - .5, r / (R - 1) - .5) / Math.SQRT1_2,
+    'Random': () => Math.random(),
+  };
+  const EASES = ['ease-in-out', 'ease', 'linear', 'ease-in', 'ease-out', 'cubic-bezier(.7,0,.2,1)', 'cubic-bezier(.34,1.56,.64,1)'];
+
+  const SLIDERS = [
+    ['cols', 'Columns', 2, 32, 1], ['rows', 'Rows', 2, 32, 1], ['gap', 'Gap (px)', 0, 6, .1],
+    ['spread', 'Wave spread (s)', 0, 6, .1], ['cycle', 'Loop length (s)', 3, 20, .5],
+    ['flip', 'Flip time (s)', .2, 2.5, .1], ['persp', 'Perspective (px, 0 = off)', 0, 2000, 50],
+  ];
+  const SELECTS = [['style', 'Flip style', STYLES], ['dir', 'Wave direction', DIRS], ['ease', 'Easing', Object.fromEntries(EASES.map(e => [e]))]];
+
+  const hero = document.getElementById('h'), ui = document.getElementById('ui');
+  let anims = [], paused = false;
+
+  function seq(a, b, c, s, ease) { // green hold, flip to pink, pink hold, flip back, green hold
+    const o = [0, s[0], s[1], s[2], s[3], 1], v = [a, a, b, b, c, c];
+    return o.map((offset, i) => ({ ...v[i], offset, easing: i === 1 || i === 3 ? ease : 'linear' }));
+  }
+
+  function build() {
+    anims.forEach(a => a.cancel()); anims = []; hero.innerHTML = '';
+    const { cols: C, rows: R } = S, st = STYLES[S.style], order = DIRS[S.dir];
+    hero.dataset.mode = st.axis ? 'rot' : 'flat';
+    hero.style.setProperty('--cols', C); hero.style.setProperty('--rows', R);
+    hero.style.gridTemplate = `repeat(${R}, 1fr) / repeat(${C}, 1fr)`;
+
+    const cyc = S.cycle * 1000, f = Math.min(S.flip / S.cycle, .22);
+    const s = [.03, .03 + f, .5, .5 + f];
+    const P = S.persp > 0 ? `perspective(${S.persp}px) ` : '';
+    const tileKF = st.axis && (e => seq({ transform: P + st.axis(0) }, { transform: P + st.axis(180) }, { transform: P + st.axis(360) }, s, e));
+
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      const t = document.createElement('div'); t.className = 't';
+      t.style.setProperty('--c', c); t.style.setProperty('--r', r);
+      t.innerHTML = '<div class="f g"></div><div class="f p"></div>';
+      hero.append(t);
+      const opt = { duration: cyc, delay: order(c, r, C, R) * S.spread * 1000, iterations: Infinity, fill: 'both' };
+      if (st.axis) {
+        t.lastChild.style.transform = st.axis(180); // back face starts turned away
+        anims.push(t.animate(tileKF(S.ease), opt));
+      } else {
+        const [fa, fb] = st.front, [ba, bb] = st.back;
+        anims.push(t.firstChild.animate(seq(fa, fb, fa, s, S.ease), opt), t.lastChild.animate(seq(ba, bb, ba, s, S.ease), opt));
+      }
+    }
+    if (paused) anims.forEach(a => a.pause());
+  }
+
+  // controls
+  ui.innerHTML = SLIDERS.map(([k, name, min, max, step]) =>
+    `<label for="${k}">${name}<output id="o-${k}">${S[k]}</output><input id="${k}" type="range" min="${min}" max="${max}" step="${step}" value="${S[k]}"></label>`).join('') +
+    SELECTS.map(([k, name, opts]) =>
+    `<label for="${k}">${name}<span></span><select id="${k}">${Object.keys(opts).map(o => `<option${o === S[k] ? ' selected' : ''}>${o}</option>`).join('')}</select></label>`).join('') +
+    `<div class="row"><button id="pause">Pause</button><button id="replay">Replay</button><button id="copy">Copy settings</button></div>
+     <textarea id="json" hidden readonly rows="4" style="width:100%;background:#0003;color:inherit"></textarea>`;
+
+  ui.addEventListener('input', e => {
+    const k = e.target.id; if (!(k in S)) return;
+    S[k] = e.target.type === 'range' ? +e.target.value : e.target.value;
+    const o = document.getElementById('o-' + k); if (o) o.textContent = S[k];
+    if (k === 'gap') document.documentElement.style.setProperty('--gap', S.gap); else build();
+  });
+  document.getElementById('pause').onclick = e => { paused = !paused; anims.forEach(a => paused ? a.pause() : a.play()); e.target.textContent = paused ? 'Play' : 'Pause'; };
+  document.getElementById('replay').onclick = () => build();
+  document.getElementById('copy').onclick = () => {
+    const j = document.getElementById('json'), txt = JSON.stringify(S);
+    j.hidden = false; j.value = txt; j.select();
+    navigator.clipboard?.writeText(txt).catch(() => {}); // falls back to the selected text box
+  };
+  document.documentElement.style.setProperty('--gap', S.gap);
+  build();
 </script>
