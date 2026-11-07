@@ -3,12 +3,12 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;800&display=swap">
 <style>
   /* palette pulled from the hero gradients */
-  :root { --bg: #fde6f1; --head: #f0043a; --ink: #3a0a24; --plum: #5c003c; --green: #00603a; --chip: #ffffffb0; }
+  :root { --bg: #e9ecd6; --head: #00603a; --ink: #0d2a1c; --pink: #f0043a; }
   html, body { margin: 0; background: var(--bg); color: var(--ink); color-scheme: light; }
   body { font-family: 'Inter Tight', system-ui, sans-serif; padding-block: 3vw; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 
   .page { position: relative; max-width: 1600px; margin: auto; min-height: 56vw; display: grid; gap: 2vw 1.5vw;
-          grid-template-columns: repeat(12, 1fr); align-content: start; padding-bottom: 8vw; }
+          grid-template-columns: repeat(12, 1fr); align-content: start; padding-bottom: 2vw; }
   .tag   { grid-column: 1 / 3; font-size: 12px; padding-top: 1.2vw; }
   h1     { grid-column: 3 / 12; margin: 0; color: var(--head); font-weight: 800; text-transform: uppercase;
            font-size: clamp(38px, 7.4vw, 125px); line-height: .9; letter-spacing: -.045em; text-wrap: balance; }
@@ -19,24 +19,14 @@
   .stats { grid-column: 6 / 13; display: grid; grid-template-columns: 1fr 1fr; gap: 2.5vw 3vw; margin-top: 3vw; }
   .num { font-size: clamp(64px, 11.5vw, 190px); font-weight: 800; letter-spacing: -.05em; line-height: 1; color: var(--head);
          height: .7em; overflow: hidden; }      /* crops the bottom, like the reference */
-  .stat:nth-child(even) .num { color: var(--green); }
+  .stat:nth-child(even) .num { color: var(--pink); }
   .stat p { margin-top: .6vw; }
 
-  .dock { position: absolute; display: flex; gap: 12px; bottom: 0; }
-  .dock.l { left: 0; } .dock.r { right: 0; flex-direction: column; }
-  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 14px; background: var(--chip); color: var(--plum);
-         border: 0; border-radius: 28px; font: 500 clamp(16px, 2.2vw, 34px)/1 inherit; font-family: inherit; text-decoration: none; cursor: pointer; }
-  .btn.pill { padding: 2.2vw 3vw; }
-  .btn.sq { width: clamp(60px, 8vw, 120px); aspect-ratio: 1; border-radius: 24px; }
-  .btn svg { width: 1.1em; height: 1.1em; } .sq svg { width: 40%; height: 40%; }
-  .btn:hover { background: #fff; } :focus-visible { outline: 2px solid var(--head); outline-offset: 2px; }
 
   @media (max-width: 700px) {
-    .page { grid-template-columns: 1fr 1fr; padding-bottom: 150px; }
+    .page { grid-template-columns: 1fr 1fr; padding-bottom: 16px; }
     .tag, h1, .a, .b, .c, .stats { grid-column: 1 / -1; margin-top: 0; text-align: left; }
     p { font-size: 14px; } .stat p { font-size: 13px; }
-    .btn.pill { padding: 16px 22px; } .btn.sq { width: 56px; }
-    .dock.r { flex-direction: row; }
   }
 </style>
 
@@ -52,11 +42,5 @@
     <div class="stat"><div class="num">76%</div><p>second stat caption</p></div>
     <div class="stat"><div class="num">400+</div><p>third stat caption</p></div>
     <div class="stat"><div class="num">8+</div><p>fourth stat caption</p></div>
-  </div>
-
-  <div class="dock l"><a class="btn pill" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 18 18 6M8 6h10v10"/></svg>Visit site</a></div>
-  <div class="dock r">
-    <button class="btn sq" aria-label="Expand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button>
-    <button class="btn sq" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
   </div>
 </main>
